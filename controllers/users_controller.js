@@ -21,21 +21,18 @@ module.exports.register = (req, res) => {
                     })
                 }
                 else{
-                    bcrypt.genSalt(10, (err, salt) =>{
-                        bcrypt.hash(password, salt, (err, hash) => {
-                            if(err) throw err;
-                            else{
-                                password = hash;
-                                User.create({ email, password }).then(() => {
-                                    res.status(200).json({
-                                        msg: 'Registered Successfully!!'
-                                    })
-                                }).catch(err => console.log(err))
-                            }
-                        })
-                    })
+                    bcrypt.genSalt(10).then(salt => {
+                        bcrypt.hash(password, salt).then(hash => {
+                            password = hash;
+                            User.create({ email, password}).then(() => {
+                                res.status(200).json({
+                                    msg: 'Registered Successfully!!'
+                                });
+                            }).catch(err => console.log(err))
+                        }).catch(err => console.log(err))
+                    }).catch(err => console.log(err))
                 }
-            }).catch(err => console.log(err))
+            });
         }
         else{
             res.status(400).json({
@@ -59,20 +56,19 @@ module.exports.login = (req, res) => {
     }
     User.findOne({ email }).then(user => {
         if(user){
-            bcrypt.compare(password, user.password, (err, isMatch) => {
-                if(err) throw err;
+            bcrypt.compare(password, user.password).then(isMatch => {
                 if(isMatch){
                     token = signToken(user);
                     res.status(200).json({
-                        token
+                        token: `Bearer ${token}`
                     });
                 }
                 else{
                     res.status(400).json({
-                        msg: 'Invalid Password!!'
-                    });
+                        msg: 'Password Incorrect!!'
+                    })
                 }
-            });
+            }).catch(err => console.log(err))
         }
         else{
             res.status(400).json({
